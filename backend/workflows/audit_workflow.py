@@ -9,10 +9,10 @@ from datetime import datetime
 import logging
 import os
 import json
-from langgraph import StateGraph, END
+from langgraph.graph import StateGraph
+from langgraph.constants import END
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.checkpoint.redis import RedisSaver
-from langgraph.graph import interrupt
+from langgraph.types import interrupt
 import redis
 import asyncio
 
@@ -57,18 +57,19 @@ class AuditWorkflow:
         self.interrupt_enabled = True
 
     def _setup_checkpointer(self, checkpointer=None):
-        """Setup Redis checkpointer for state persistence"""
+        """Setup checkpointer for state persistence"""
         if checkpointer:
             return checkpointer
 
         try:
-            # Try to use Redis checkpointer for production
+            # Test Redis connection for potential future use
             redis_client = redis.from_url(self.redis_url)
             redis_client.ping()  # Test connection
-            logger.info("Using Redis checkpointer for state persistence")
-            return RedisSaver(redis_client)
+            logger.info("Redis connection successful, but using MemorySaver for now")
+            # TODO: Implement Redis checkpointer when available in langgraph
+            return MemorySaver()
         except Exception as e:
-            logger.warning(f"Redis connection failed: {e}. Falling back to MemorySaver")
+            logger.warning(f"Redis connection failed: {e}. Using MemorySaver")
             return MemorySaver()
 
     def _create_graph(self) -> StateGraph:
