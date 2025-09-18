@@ -5,7 +5,7 @@ Implements Benford's Law for detecting financial anomalies
 
 import math
 import numpy as np
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from collections import Counter
 from scipy import stats
 import logging

@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = ""
 
+    # Groq
+    GROQ_API_KEY: str = ""
+
+    # Guardrails
+    GUARDRAILS_API_KEY: str = ""
+
     # OpenTelemetry
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
     OTEL_SERVICE_NAME: str = "financial-audit-backend"
@@ -39,6 +45,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Allow extra environment variables
 
 
 settings = Settings()
