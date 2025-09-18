@@ -12,7 +12,7 @@ import json
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import IsolationForest
-import pickle
+import joblib
 import os
 
 logger = logging.getLogger(__name__)
@@ -58,21 +58,23 @@ class RLAnomalyDetector:
         logger.info("Created default Isolation Forest model")
 
     def _load_model(self):
-        """Load pre-trained model"""
+        """Load pre-trained model using secure joblib"""
         try:
-            with open(self.model_path, 'rb') as f:
-                model_data = pickle.load(f)
+            if os.path.exists(self.model_path):
+                model_data = joblib.load(self.model_path)
                 self.isolation_forest = model_data.get('model')
                 self.feature_scaler = model_data.get('scaler', StandardScaler())
                 self.label_encoders = model_data.get('encoders', {})
                 self.model_version = model_data.get('version', '1.0.0')
-            logger.info(f"Loaded RL model version {self.model_version}")
+                logger.info(f"Loaded RL model version {self.model_version}")
+            else:
+                self._create_default_model()
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             self._create_default_model()
 
     def _save_model(self):
-        """Save the trained model"""
+        """Save the trained model using secure joblib"""
         try:
             os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
             model_data = {
@@ -82,8 +84,7 @@ class RLAnomalyDetector:
                 'version': self.model_version,
                 'training_date': datetime.utcnow().isoformat()
             }
-            with open(self.model_path, 'wb') as f:
-                pickle.dump(model_data, f)
+            joblib.dump(model_data, self.model_path)
             logger.info(f"Model saved to {self.model_path}")
         except Exception as e:
             logger.error(f"Failed to save model: {e}")

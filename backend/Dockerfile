@@ -66,12 +66,12 @@ RUN mkdir -p /app/logs /app/tmp /app/uploads \
 # Copy OpenTelemetry configuration
 COPY config/otel/ ./config/otel/
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
 # Switch to non-root user
 USER appuser
+
+# Health check (must be after USER directive)
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose port
 EXPOSE 8000
