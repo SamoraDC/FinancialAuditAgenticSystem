@@ -1,0 +1,183 @@
+# Prometheus Alert Rules for Financial Audit System
+
+groups:
+  - name: financial-audit.rules
+    rules:
+      # High-level service availability alerts
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute."
+
+      # Backend API alerts
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value }} errors per second on {{ $labels.job }}."
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.job }}"
+          description: "95th percentile latency is {{ $value }}s on {{ $labels.job }}."
+
+      # Database alerts
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "Database connections are at {{ $value }}% of maximum."
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_database_tup_returned[5m]) / rate(pg_stat_database_tup_fetched[5m]) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database slow queries detected"
+          description: "Query efficiency is low at {{ $value }}."
+
+      # Redis alerts
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is {{ $value }}% of maximum."
+
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients > 100
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Redis connections"
+          description: "Redis has {{ $value }} connected clients."
+
+      # System resource alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%."
+
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value }}% on {{ $labels.mountpoint }}."
+
+      # Financial audit specific alerts
+      - alert: AuditProcessingStalled
+        expr: increase(audit_processes_started_total[10m]) == 0 and audit_processes_pending > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Audit processing stalled"
+          description: "No audit processes have started in 10 minutes despite pending audits."
+
+      - alert: HighAnomalyDetectionLatency
+        expr: histogram_quantile(0.95, rate(anomaly_detection_duration_seconds_bucket[5m])) > 30
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High anomaly detection latency"
+          description: "Anomaly detection is taking {{ $value }}s at 95th percentile."
+
+      - alert: MLModelAccuracyDrop
+        expr: ml_model_accuracy < 0.85
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ML model accuracy drop"
+          description: "ML model accuracy dropped to {{ $value }}."
+
+      - alert: ComplianceViolationDetected
+        expr: increase(compliance_violations_total[1m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Compliance violation detected"
+          description: "{{ $value }} compliance violation(s) detected in the last minute."
+
+      # Security alerts
+      - alert: SecurityScanFailure
+        expr: increase(security_scan_failures_total[5m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Security scan failure"
+          description: "{{ $value }} security scan failure(s) in the last 5 minutes."
+
+      - alert: UnauthorizedAccess
+        expr: increase(http_requests_total{status="401"}[1m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts in the last minute."
+
+      # Observability stack alerts
+      - alert: PrometheusTargetDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus target down"
+          description: "Prometheus target {{ $labels.instance }} is down."
+
+      - alert: JaegerDown
+        expr: up{job="jaeger"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Jaeger tracing down"
+          description: "Jaeger tracing service is down."
+
+      - alert: OtelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpenTelemetry collector down"
+          description: "OpenTelemetry collector is down, metrics and traces may be lost."

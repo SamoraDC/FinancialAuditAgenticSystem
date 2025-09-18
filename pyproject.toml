@@ -4,4 +4,24 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi>=0.116.2",
+    "langchain>=0.3.27",
+    "langchain-groq>=0.3.8",
+    "langextract>=1.0.9",
+    "langgraph>=0.6.7",
+    "matplotlib",
+    "openai>=1.108.0",
+    "pydantic>=2.11.9",
+    "pydantic-ai>=1.0.8",
+    "pydantic-settings>=2.10.1",
+    "pymupdf>=1.26.4",
+    "python-docx>=1.2.0",
+    "scikit-learn",
+    "scipy",
+    "seaborn",
+    "stable-baselines3>=2.7.0",
+    "torch>=2.8.0",
+    "transformers>=4.56.1",
+    "uvicorn[standard]>=0.35.0",
+]

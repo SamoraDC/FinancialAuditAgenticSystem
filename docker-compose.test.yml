@@ -1,0 +1,67 @@
+# Docker Compose configuration for testing
+version: '3.8'
+
+services:
+  # Test Database
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: financial_audit_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Test Redis
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    tmpfs:
+      - /data
+    command: redis-server --appendonly no --save ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Backend for testing
+  backend-test:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres-test:5432/financial_audit_test
+      - REDIS_URL=redis://redis-test:6379
+      - ENVIRONMENT=test
+      - SECRET_KEY=test-secret-key
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger-test:4317
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+  # Minimal Jaeger for testing
+  jaeger-test:
+    image: jaegertracing/all-in-one:1.52
+    ports:
+      - "16687:16686"
+      - "4319:4317"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+networks:
+  default:
+    name: financial-audit-test-network

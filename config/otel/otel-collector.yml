@@ -1,0 +1,154 @@
+# OpenTelemetry Collector Configuration
+# Comprehensive observability for Financial Audit Agentic System
+
+receivers:
+  # OTLP receiver for traces, metrics, and logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus metrics scraping
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'financial-audit-backend'
+          static_configs:
+            - targets: ['backend:8000']
+          scrape_interval: 30s
+          metrics_path: '/metrics'
+
+        - job_name: 'financial-audit-frontend'
+          static_configs:
+            - targets: ['frontend:3000']
+          scrape_interval: 30s
+          metrics_path: '/metrics'
+
+        - job_name: 'redis'
+          static_configs:
+            - targets: ['redis:6379']
+          scrape_interval: 30s
+
+        - job_name: 'postgres'
+          static_configs:
+            - targets: ['postgres:5432']
+          scrape_interval: 30s
+
+  # Host metrics
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      disk:
+      filesystem:
+      memory:
+      network:
+      process:
+        mute_process_name_error: true
+
+  # Docker stats
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 30s
+    timeout: 20s
+
+processors:
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 512
+
+  # Batch processor for efficiency
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Resource processor to add service information
+  resource:
+    attributes:
+      - key: service.namespace
+        value: financial-audit
+        action: upsert
+      - key: deployment.environment
+        from_attribute: ENVIRONMENT
+        action: insert
+
+  # Probabilistic sampling for high-volume traces
+  probabilistic_sampler:
+    sampling_percentage: 20
+
+  # Attributes processor for sensitive data filtering
+  attributes:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: db.statement
+        action: hash
+
+exporters:
+  # Jaeger for distributed tracing
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Prometheus for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    const_labels:
+      service: financial-audit
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+
+  # OTLP exporter for external systems
+  otlp/external:
+    endpoint: ${EXTERNAL_OTLP_ENDPOINT}
+    headers:
+      api-key: ${EXTERNAL_API_KEY}
+    tls:
+      insecure: false
+
+  # File exporter for audit trail
+  file:
+    path: /var/log/otel/traces.json
+
+service:
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource, probabilistic_sampler, attributes]
+      exporters: [jaeger, logging, file]
+
+    # Metrics pipeline
+    metrics:
+      receivers: [otlp, prometheus, hostmetrics, docker_stats]
+      processors: [memory_limiter, batch, resource]
+      exporters: [prometheus, logging]
+
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [logging, file]
+
+  extensions: [health_check, pprof, zpages]
+
+extensions:
+  # Health check endpoint
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # Performance profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679

@@ -1,0 +1,174 @@
+# OpenTelemetry SDK Configuration
+# Application-level observability configuration
+
+# Resource attributes
+resource:
+  attributes:
+    service.name: ${OTEL_SERVICE_NAME}
+    service.version: ${SERVICE_VERSION}
+    service.namespace: financial-audit
+    deployment.environment: ${ENVIRONMENT}
+
+# Instrumentation configuration
+instrumentation:
+  # FastAPI auto-instrumentation
+  fastapi:
+    enabled: true
+    capture_headers: true
+    exclude_urls:
+      - /health
+      - /metrics
+      - /favicon.ico
+
+  # Database instrumentation
+  sqlalchemy:
+    enabled: true
+    capture_statement_parameters: false  # Security: don't capture sensitive data
+
+  # Redis instrumentation
+  redis:
+    enabled: true
+    capture_statement: false
+
+  # HTTP client instrumentation
+  requests:
+    enabled: true
+    capture_headers: false
+
+  # LangGraph specific instrumentation
+  langgraph:
+    enabled: true
+    capture_state_transitions: true
+    capture_node_execution: true
+    capture_edge_routing: true
+
+# Tracing configuration
+tracing:
+  # Span limits
+  max_attributes: 128
+  max_events: 128
+  max_links: 128
+  max_attribute_length: 1024
+
+  # Sampling
+  sampler:
+    type: probabilistic
+    rate: 0.1  # 10% sampling rate
+
+  # Span processors
+  processors:
+    - type: batch
+      config:
+        max_queue_size: 2048
+        schedule_delay_millis: 5000
+        export_timeout_millis: 30000
+        max_export_batch_size: 512
+
+# Metrics configuration
+metrics:
+  # Metric readers
+  readers:
+    - type: prometheus
+      config:
+        endpoint: /metrics
+        interval_millis: 10000
+
+  # Views for custom aggregations
+  views:
+    - selector:
+        instrument_name: "audit_process_duration"
+      view:
+        aggregation:
+          type: histogram
+          buckets: [0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 25.0, 50.0, 100.0]
+
+    - selector:
+        instrument_name: "anomaly_detection_score"
+      view:
+        aggregation:
+          type: histogram
+          buckets: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
+# Logging configuration
+logging:
+  # Log correlation
+  correlation:
+    enabled: true
+    trace_id_field: "trace_id"
+    span_id_field: "span_id"
+
+  # Log levels
+  levels:
+    default: INFO
+    sqlalchemy: WARN
+    requests: WARN
+
+# Exporters
+exporters:
+  # OTLP exporter
+  otlp:
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    protocol: grpc
+    compression: gzip
+    timeout_millis: 10000
+    headers:
+      authorization: "Bearer ${OTEL_EXPORTER_OTLP_TOKEN}"
+
+  # Console exporter for development
+  console:
+    enabled: ${DEBUG}
+
+# Propagators
+propagators:
+  - tracecontext
+  - baggage
+  - b3multi
+
+# Custom detectors
+detectors:
+  # Environment detector
+  env:
+    enabled: true
+
+  # Process detector
+  process:
+    enabled: true
+
+  # Container detector
+  container:
+    enabled: true
+
+# Security and privacy
+security:
+  # Attribute filtering
+  attribute_filters:
+    - pattern: ".*password.*"
+      action: remove
+    - pattern: ".*secret.*"
+      action: remove
+    - pattern: ".*token.*"
+      action: hash
+    - pattern: ".*ssn.*"
+      action: remove
+    - pattern: ".*credit_card.*"
+      action: remove
+
+  # URL filtering for sensitive endpoints
+  url_filters:
+    - pattern: "/auth/.*"
+      action: sanitize
+    - pattern: "/admin/.*"
+      action: sanitize
+
+# Performance tuning
+performance:
+  # Memory limits
+  max_memory_mb: 256
+
+  # Queue sizes
+  trace_queue_size: 1024
+  metric_queue_size: 1024
+
+  # Timeouts
+  export_timeout_millis: 30000
+  shutdown_timeout_millis: 5000

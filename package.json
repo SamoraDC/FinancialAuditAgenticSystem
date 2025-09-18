@@ -1,0 +1,48 @@
+{
+  "name": "financialauditagenticsystem",
+  "version": "1.0.0",
+  "description": "Financial Audit Agentic System with document processing and statistical analysis",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npm run backend:dev",
+    "backend:dev": "cd backend && uvicorn main:app --reload",
+    "frontend:dev": "cd frontend && npm run dev",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "claudeFlow": {
+    "executionMode": "standalone",
+    "claudeCodeIntegration": false,
+    "useBuiltinExecutor": true,
+    "fallbackMode": "native"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamoraDC/FinancialAuditAgenticSystem.git"
+  },
+  "keywords": [
+    "financial-audit",
+    "ai-agents",
+    "document-processing",
+    "anomaly-detection",
+    "benford-law",
+    "langgraph",
+    "pydantic-ai"
+  ],
+  "author": "SamoraDC",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SamoraDC/FinancialAuditAgenticSystem/issues"
+  },
+  "homepage": "https://github.com/SamoraDC/FinancialAuditAgenticSystem#readme",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  }
+}
