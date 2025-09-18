@@ -325,18 +325,3 @@ jobs:
           echo "Deploying to production environment..."
           # Add deployment commands here
 
-  # Notify on failure
-  notify-failure:
-    runs-on: ubuntu-latest
-    needs: [security-scan, backend-test, frontend-test, build-test]
-    if: failure()
-
-    steps:
-      - name: Notify on failure
-        uses: 8398a7/action-slack@v3
-        with:
-          status: failure
-          channel: '#ci-cd'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always() && secrets.SLACK_WEBHOOK_URL != ''
