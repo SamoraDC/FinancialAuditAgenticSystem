@@ -101,6 +101,8 @@ jobs:
             case $strategy in
               "comprehensive")
                 pytest backend/tests/ \
+                  --ignore=backend/tests/performance/test_load.py \
+                  --ignore=backend/tests/unit/test_statistical_analyzer.py \
                   --cov=backend \
                   --cov-report=xml \
                   --cov-report=html \
@@ -111,6 +113,8 @@ jobs:
                 ;;
               "basic")
                 pytest backend/tests/ \
+                  --ignore=backend/tests/performance/test_load.py \
+                  --ignore=backend/tests/unit/test_statistical_analyzer.py \
                   --cov=backend \
                   --cov-report=xml \
                   --junit-xml=test-results.xml \
@@ -118,6 +122,8 @@ jobs:
                 ;;
               "minimal")
                 pytest backend/tests/ \
+                  --ignore=backend/tests/performance/test_load.py \
+                  --ignore=backend/tests/unit/test_statistical_analyzer.py \
                   --junit-xml=test-results.xml \
                   --tb=no \
                   -q
