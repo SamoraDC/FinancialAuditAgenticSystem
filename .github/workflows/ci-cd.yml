@@ -11,9 +11,60 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Dependency Validation - CRITICAL FIRST STEP
+  dependency-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install UV and basic tools
+        run: |
+          pip install uv toml
+
+      - name: Validate pyproject.toml syntax
+        run: |
+          python -c "import toml; toml.load('pyproject.toml')"
+          echo "✅ pyproject.toml syntax is valid"
+
+      - name: Validate dependencies are properly declared
+        run: |
+          python scripts/validate_dependencies.py
+
+      - name: Update and validate uv.lock
+        run: |
+          uv lock --upgrade
+          echo "✅ uv.lock updated successfully"
+
+      - name: Install and verify all dependencies
+        run: |
+          uv sync --all-extras
+          echo "✅ All dependencies installed successfully"
+
+      - name: Generate dependency report
+        run: |
+          echo "## Dependency Report" > dependency-report.md
+          echo "Generated on: $(date)" >> dependency-report.md
+          echo "" >> dependency-report.md
+          echo "### Installed Packages" >> dependency-report.md
+          uv tree >> dependency-report.md || echo "uv tree not available" >> dependency-report.md
+
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report
+          path: dependency-report.md
+
   # Security and Code Quality Checks
   security-scan:
     runs-on: ubuntu-latest
+    needs: [dependency-validation]  # Only run after dependency validation
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,6 +112,7 @@ jobs:
   # Backend Tests
   backend-test:
     runs-on: ubuntu-latest
+    needs: [dependency-validation]  # Only run after dependency validation
     services:
       redis:
         image: redis:7-alpine
