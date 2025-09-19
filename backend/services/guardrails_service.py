@@ -11,6 +11,9 @@ import json
 import re
 from datetime import datetime
 
+# Initialize logger first
+logger = logging.getLogger(__name__)
+
 try:
     import guardrails as gd
     from guardrails.hub import DetectPII, DetectSecrets, ToxicLanguage, RestrictToTopic
@@ -22,8 +25,6 @@ except ImportError:
 
 from ..services.groq_llm_service import GroqLLMService
 from ..core.config import settings
-
-logger = logging.getLogger(__name__)
 
 
 class SecurityLevel(str, Enum):
