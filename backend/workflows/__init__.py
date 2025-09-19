@@ -1,8 +1,8 @@
 """LangGraph workflows package"""
 
-from .audit_workflow import FinancialAuditWorkflow, AuditState
+from .audit_workflow import AuditWorkflow, AuditState
 
 __all__ = [
-    "FinancialAuditWorkflow",
+    "AuditWorkflow",
     "AuditState"
 ]

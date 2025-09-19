@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-from backend.workflows.audit_workflow import FinancialAuditWorkflow, AuditState
+from backend.workflows.audit_workflow import AuditWorkflow, AuditState
 from backend.database.duckdb_manager import DuckDBManager
 
 

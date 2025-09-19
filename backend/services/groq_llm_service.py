@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 class ModelType(str, Enum):
-    MAIN_LLM = "openai/gpt-oss-120b"
-    SECURITY_GUARD = "meta-llama/llama-guard-4-12b"
+    MAIN_LLM = settings.GROQ_MODEL_MAIN
+    SECURITY_GUARD = settings.GROQ_MODEL_GUARDRAILS
 
 
 @dataclass

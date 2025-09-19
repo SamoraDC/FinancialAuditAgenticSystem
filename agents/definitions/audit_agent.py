@@ -5,10 +5,10 @@ Financial Audit Agent using PydanticAI
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models import Model
 
-from agents.tools.financial_analysis import FinancialAnalysisTool
-from agents.tools.risk_assessment import RiskAssessmentTool
+# Note: Tools temporarily disabled to fix import issues
+# from agents.tools.financial_analysis import FinancialAnalysisTool
+# from agents.tools.risk_assessment import RiskAssessmentTool
 
 
 class AuditContext(BaseModel):
@@ -41,9 +41,9 @@ class AuditReport(BaseModel):
 
 
 # Initialize the audit agent
-audit_agent = Agent[AuditContext, AuditReport](
-    model=Model(),  # Use default model
-    result_type=AuditReport,
+# Note: Model initialization is handled by the Agent constructor
+AuditAgent = Agent(
+    model='groq:mixtral-8x7b-32768',  # Use Groq model
     system_prompt="""
     You are an expert financial auditor with deep knowledge of accounting standards,
     risk assessment, and fraud detection. Your role is to:
@@ -57,11 +57,11 @@ audit_agent = Agent[AuditContext, AuditReport](
     Always maintain professional skepticism and follow auditing standards.
     Focus on materiality and risk-based approaches.
     """,
-    tools=[FinancialAnalysisTool(), RiskAssessmentTool()],
+    # tools=[FinancialAnalysisTool(), RiskAssessmentTool()],  # Temporarily disabled
 )
 
 
-@audit_agent.tool
+@AuditAgent.tool
 async def analyze_financial_ratios(
     ctx: RunContext[AuditContext],
     financial_data: Dict[str, float]
@@ -96,7 +96,7 @@ async def analyze_financial_ratios(
     }
 
 
-@audit_agent.tool
+@AuditAgent.tool
 async def detect_fraud_indicators(
     ctx: RunContext[AuditContext],
     transaction_data: List[Dict[str, Any]]

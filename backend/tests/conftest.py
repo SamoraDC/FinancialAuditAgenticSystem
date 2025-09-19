@@ -15,10 +15,10 @@ from fastapi.testclient import TestClient
 from backend.main import app
 from backend.database.duckdb_manager import DuckDBManager
 from backend.services.document_processor import DocumentProcessor
-from backend.services.statistical_analyzer import StatisticalAnalysisService
+from backend.services.statistical_analyzer import StatisticalAnalyzer
 from backend.services.groq_llm_service import GroqLLMService
 from backend.services.guardrails_service import GuardRailsSecurityService
-from backend.workflows.audit_workflow import FinancialAuditWorkflow, AuditState
+from backend.workflows.audit_workflow import AuditWorkflow, AuditState
 
 
 @pytest.fixture(scope="session")
@@ -60,7 +60,7 @@ def document_processor():
 @pytest.fixture
 def statistical_analyzer():
     """Statistical analyzer instance"""
-    return StatisticalAnalysisService()
+    return StatisticalAnalyzer()
 
 
 @pytest.fixture
@@ -94,7 +94,7 @@ def security_service():
 @pytest.fixture
 def audit_workflow(db_manager, mock_groq_service):
     """Audit workflow with mocked dependencies"""
-    workflow = FinancialAuditWorkflow()
+    workflow = AuditWorkflow()
     workflow.llm_service = mock_groq_service
     workflow.db_manager = db_manager
     return workflow

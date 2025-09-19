@@ -22,7 +22,7 @@ from backend.workflows.audit_workflow import (
     start_audit_workflow, get_audit_state, resume_audit_workflow,
     get_workflow
 )
-from backend.services.document_processor import EnhancedDocumentProcessor
+from backend.services.document_processor import DocumentProcessor
 from backend.core.config import get_settings
 from backend.core.logging import get_logger
 
@@ -334,7 +334,7 @@ class AuditService:
     def __init__(self):
         self.settings = get_settings()
         self.swarm_memory = SwarmMemoryManager()
-        self.document_processor = EnhancedDocumentProcessor(enable_pii_detection=True)
+        self.document_processor = DocumentProcessor()
         self.legacy_document_processor = LegacyDocumentProcessor()  # Fallback for compatibility
         self.statistical_analyzer = StatisticalAnalyzer()
         self.audit_sessions: Dict[str, AuditSession] = {}

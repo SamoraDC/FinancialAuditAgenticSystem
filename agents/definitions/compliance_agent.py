@@ -5,7 +5,6 @@ Compliance Agent using PydanticAI for regulatory compliance checks
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models import Model
 
 
 class ComplianceContext(BaseModel):
@@ -39,9 +38,8 @@ class ComplianceReport(BaseModel):
 
 
 # Initialize the compliance agent
-compliance_agent = Agent[ComplianceContext, ComplianceReport](
-    model=Model(),
-    result_type=ComplianceReport,
+compliance_agent = Agent(
+    model='groq:mixtral-8x7b-32768',  # Use Groq model
     system_prompt="""
     You are a regulatory compliance expert specializing in financial regulations.
     Your expertise covers:

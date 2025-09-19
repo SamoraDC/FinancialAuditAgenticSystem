@@ -5,6 +5,7 @@ Specialized agents for financial audit process
 
 import asyncio
 import logging
+import os
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 from decimal import Decimal
@@ -26,44 +27,73 @@ from backend.services.rl_anomaly_detector import RLAnomalyDetector
 from backend.services.mcp_integration import MCPClient
 from backend.utils.benford_law import BenfordAnalyzer
 from backend.utils.risk_calculator import RiskCalculator
+from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Check if we're in test mode to avoid OpenAI API calls during testing
+TEST_MODE = os.getenv('TEST_MODE', 'false').lower() == 'true' or settings.TEST_MODE
+
+
+class MockAgent:
+    """Mock agent for testing that returns dummy responses"""
+    def __init__(self, system_prompt: str, result_type=None):
+        self.system_prompt = system_prompt
+        self.result_type = result_type
+
+    async def run(self, user_prompt: str, *args, **kwargs):
+        """Return mock data for testing"""
+        return {
+            "status": "success",
+            "data": {"mock": True, "message": "Test mode response"},
+            "confidence": 0.95
+        }
+
+
+def create_agent(model: str, system_prompt: str, result_type=None):
+    """Create agent conditionally based on test mode"""
+    if TEST_MODE:
+        logger.info(f"Creating mock agent for test mode: {model}")
+        return MockAgent(system_prompt, result_type)
+    else:
+        return Agent(model, system_prompt=system_prompt, result_type=result_type)
+
+
 # PydanticAI Agents for structured data processing
-ingest_agent = Agent(
-    'openai:gpt-4o',
+ingest_agent = create_agent(
+    f'groq:{settings.GROQ_MODEL_MAIN}',
     system_prompt="""You are a financial document processing agent.
     Extract structured data from financial documents with high accuracy.
     Always return valid JSON matching the specified schema.""",
     result_type=Dict[str, Any]
 )
 
-statistical_agent = Agent(
-    'openai:gpt-4o',
+statistical_agent = create_agent(
+    f'groq:{settings.GROQ_MODEL_MAIN}',
     system_prompt="""You are a statistical analysis agent specializing in financial anomaly detection.
     Apply Benford's Law, Zipf's Law, and other statistical methods to detect irregularities.
     Calculate anomaly scores and provide detailed analysis.""",
     result_type=Dict[str, Any]
 )
 
-regulatory_agent = Agent(
-    'openai:gpt-4o',
+regulatory_agent = create_agent(
+    f'groq:{settings.GROQ_MODEL_MAIN}',
     system_prompt="""You are a regulatory compliance agent with expertise in SOX, GAAP, IFRS.
     Validate transactions against regulatory requirements using RAG.
     Identify compliance violations and assess severity.""",
     result_type=Dict[str, Any]
 )
 
-consolidation_agent = Agent(
-    'openai:gpt-4o',
+consolidation_agent = create_agent(
+    f'groq:{settings.GROQ_MODEL_MAIN}',
     system_prompt="""You are a findings consolidation agent.
     Aggregate results from multiple analysis streams and calculate overall risk scores.
     Prioritize findings and prepare comprehensive summaries.""",
     result_type=Dict[str, Any]
 )
 
-report_agent = Agent(
-    'openai:gpt-4o',
+report_agent = create_agent(
+    f'groq:{settings.GROQ_MODEL_MAIN}',
     system_prompt="""You are an audit report generation agent.
     Create professional, compliant audit reports with clear findings and recommendations.
     Follow industry standards and regulatory requirements.""",

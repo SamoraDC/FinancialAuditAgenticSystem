@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Financial Audit Agentic System"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+    TEST_MODE: bool = False
 
     # API
     API_V1_STR: str = "/api/v1"
@@ -30,10 +31,12 @@ class Settings(BaseSettings):
     LANGGRAPH_API_KEY: str = ""
 
     # OpenAI
-    OPENAI_API_KEY: str = ""
+    OPENAI_API_KEY: str = "test-key-for-ci"  # Default test key for CI/CD
 
     # Groq
-    GROQ_API_KEY: str = ""
+    GROQ_API_KEY: str = "test-key-for-ci"  # Default test key for CI/CD
+    GROQ_MODEL_MAIN: str = "openai/gpt-oss-120b"  # Main LLM model for Groq
+    GROQ_MODEL_GUARDRAILS: str = "meta-llama/llama-guard-4-12b"  # Guardrails model
 
     # Guardrails
     GUARDRAILS_API_KEY: str = ""
@@ -49,3 +52,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+def get_settings() -> Settings:
+    """Get application settings instance"""
+    return settings
